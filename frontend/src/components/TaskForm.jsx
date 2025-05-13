@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import {Paperclip} from 'lucide-react'
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const TaskForm = ({ onSubmit, onCancel }) => {
   const [taskData, setTaskData] = useState({
@@ -7,20 +8,28 @@ const TaskForm = ({ onSubmit, onCancel }) => {
     description: '',
     dueDate: '',
     priority: 'medium',
-    
   });
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value } = e.target;
     setTaskData({
       ...taskData,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: value
     });
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Validate due date is not in the past
+    const today = new Date().toISOString().split('T')[0];
+    if (taskData.dueDate < today) {
+      toast.error('Due date cannot be in the past!');
+      return;
+    }
+
     onSubmit(taskData);
+    toast.success('Task created successfully!');
   };
 
   return (
@@ -58,6 +67,7 @@ const TaskForm = ({ onSubmit, onCancel }) => {
           name="dueDate"
           value={taskData.dueDate}
           onChange={handleChange}
+          min={new Date().toISOString().split('T')[0]} // Disable past dates
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           required
         />
@@ -76,8 +86,6 @@ const TaskForm = ({ onSubmit, onCancel }) => {
           <option value="high">High</option>
         </select>
       </div>
-      
-
       
       <div className="flex justify-end space-x-3 pt-4">
         <button 

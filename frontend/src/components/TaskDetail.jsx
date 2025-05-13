@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { apiRequestTasks } from '../utils/api';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 
 const TaskDetail = ({ task, onClose, onTaskClose, onCommentSubmit }) => {
@@ -36,7 +38,10 @@ const TaskDetail = ({ task, onClose, onTaskClose, onCommentSubmit }) => {
         onCommentSubmit(response.data);
         // Clear the comment input
         setComment('');
+        toast.success("Commented succesfully");
         window.location.reload();
+        
+        
       } catch (error) {
         console.error('Error submitting comment:', error);
       }
@@ -47,6 +52,7 @@ const TaskDetail = ({ task, onClose, onTaskClose, onCommentSubmit }) => {
     try {
       const response = await apiRequestTasks(`/close/${task._id}`, 'POST', { close });
       onTaskClose(task._id, response.data);
+      toast.success("Task closed Successfully!");
     } catch (error) {
       console.error('Error closing task:', error);
     }
@@ -133,6 +139,7 @@ const TaskDetail = ({ task, onClose, onTaskClose, onCommentSubmit }) => {
  
 
           {/* Comment Section */}
+          {task.status !== 'completed' && (
           <div className="space-y-1 mt-4">
             <label className="block text-sm font-medium text-gray-700">Add a Comment</label>
             <textarea
@@ -151,6 +158,7 @@ const TaskDetail = ({ task, onClose, onTaskClose, onCommentSubmit }) => {
               </button>
             </div>
           </div>
+          )}
 
           {/* Close Task Button */}
           {task.status !== 'completed' && (

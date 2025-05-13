@@ -7,8 +7,7 @@ createTeam = async (req, res) => {
     try {
         const { name } = req.body;
         const userId = req.user._id;
-        ;
-
+        
         const teamCount = await Team.countDocuments({ where: {  createdBy: req.user.id } });
         if (teamCount >= 3) {
             return res.status(400).json({ 
@@ -113,23 +112,27 @@ getAllUsers = async (req, res) => {
     }
 };
 
-deleteTeam = async ( req, res) => {
+deleteTeam = async (req, res) => {
     try {
         const { id } = req.params;
         const userId = req.user.id;
     
         // Find team and verify owner
-        const team = await Team.findOne({ where: { id, created_by: userId } });
+        const team = await Team.findOne({ _id: id, createdBy: userId });
+        console.log(team);
         if (!team) {
-          return res.status(404).json({ error: 'Team not found or not authorized' });
+            return res.status(404).json({ error: 'Team not found or not authorized' });
         }
     
-        await team.destroy();
+        await Team.deleteOne({ createdBy: userId }); 
         res.json({ message: 'Team deleted successfully' });
-      } catch (err) {
-        next(err);
-      }
-
+    } catch (err) {
+        console.error('Error deleting team:', err);
+        res.status(500).json({ 
+            message: "Error deleting team",
+            error: err.message 
+        });
+    }
 };
 
 

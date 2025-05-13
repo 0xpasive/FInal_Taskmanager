@@ -11,7 +11,7 @@ const MyTeam = () => {
     setIsLoading(true);
     try {
       const data = await teamAPI.getTeams();
-      console.log('Fetched teams:', data);
+      
       setTeams(data);
     } catch (error) {
       console.error('Error fetching teams:', error);

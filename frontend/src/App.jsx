@@ -4,9 +4,13 @@ import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Profile from "./pages/Profile";
+import { ToastContainer } from 'react-toastify';
 
 export default function App() {
   return (
+    <>
+    <ToastContainer position="top-center" />
+
     <Router>
       <Routes>
         <Route path="/" element={<Login />} />
@@ -22,6 +26,8 @@ export default function App() {
         <Route path="/profile" element={ <ProtectedRoute><Profile /></ProtectedRoute>} />
       </Routes>
     </Router>
+    </>
+    
   );
 }
 
