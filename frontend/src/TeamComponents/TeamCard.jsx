@@ -6,6 +6,7 @@ import ConfirmModal from '../components/ConfirmModal';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+
 const TeamCard = ({ team, onUpdate }) => {
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -30,6 +31,19 @@ const TeamCard = ({ team, onUpdate }) => {
     } finally {
       setShowDeleteModal(false); // Close modal after action
     }
+  };
+  const handleRemoveMember = async (userIdToRemove) => {
+  try {
+    const updatedTeam = await teamAPI.removeMember(team._id, userIdToRemove);
+
+    // Optionally update the local state (if you have team members in state)
+    onUpdate(); // update with latest data from backend
+
+    toast.success("member removed sucessfully")
+  } catch (error) {
+    console.error("Error removing member:", error);
+    alert("Failed to remove member");
+  }
   };
 
   return (
@@ -65,7 +79,7 @@ const TeamCard = ({ team, onUpdate }) => {
         {team.members.length > 0 ? (
           <ul>
           {team.members.map(member => {
-            const isCreator = member._id === team.createdBy;
+            const isCreator = member.user._id === team.createdBy._id;
         
             return (
               <li key={member._id} className="py-2 flex justify-between items-center">
@@ -73,7 +87,7 @@ const TeamCard = ({ team, onUpdate }) => {
                   <span
                     className={`text-gray-700 ${isCreator ? 'font-semibold text-blue-600' : ''}`}
                   >
-                    {member.fullname}
+                    {member.user.fullname}
                   </span>
         
                   
@@ -85,7 +99,7 @@ const TeamCard = ({ team, onUpdate }) => {
                   )}
                 {!isCreator && (
                   <button
-                    onClick={() => handleRemoveMember(member._id)}
+                    onClick={() => handleRemoveMember(member.user._id)}
                     className="text-red-500 hover:text-red-700 text-sm"
                   >
                     Remove

@@ -41,6 +41,13 @@ const TaskDetail = ({ task, onClose, onTaskClose, onCommentSubmit }) => {
     }
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleCommentSubmit();
+    }
+  };
+
   const handleCloseTask = async() => {
     try {
       const response = await apiRequestTasks(`/close/${task._id}`, 'POST', { close });
@@ -53,7 +60,7 @@ const TaskDetail = ({ task, onClose, onTaskClose, onCommentSubmit }) => {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm bg-white/30 z-50 p-4">
-      <div className="bg-white rounded-lg p-4 md:p-6 w-full max-w-md mx-2">
+      <div className="bg-white rounded-lg p-4 md:p-6 w-full max-w-md mx-2 max-h-[90vh] flex flex-col">
         <div className="flex justify-between items-start mb-4">
           <h2 className="text-lg md:text-xl font-bold text-gray-800">Task Details</h2>
           <button 
@@ -66,7 +73,7 @@ const TaskDetail = ({ task, onClose, onTaskClose, onCommentSubmit }) => {
           </button>
         </div>
 
-        <div className="space-y-3 md:space-y-4">
+        <div className="overflow-y-auto pr-2 flex-1 space-y-3 md:space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="text-base md:text-lg font-medium text-gray-800">{task.title}</h3>
             <span className={`px-2 py-1 text-xs rounded-full ${getPriorityColor(task.priority)}`}>
@@ -117,7 +124,7 @@ const TaskDetail = ({ task, onClose, onTaskClose, onCommentSubmit }) => {
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">Comments</label>
               {task.comments.map((c, index) => (
-                <div key={index} className="bg-gray-100 p-2 rounded-md text-sm">
+                <div key={index} className="bg-gray-100 p-2 rounded-md text-sm mb-2">
                   <p className="text-gray-800">{c.comment || 'No comment text'}</p>
                   <p className="text-xs text-gray-500 text-right">
                     {new Date(c.createdAt).toLocaleString()}
@@ -127,30 +134,32 @@ const TaskDetail = ({ task, onClose, onTaskClose, onCommentSubmit }) => {
             </div>
           ) : (
             <p className="text-sm text-gray-500 italic">No comments yet.</p>
-          )}  
+          )}
+        </div>
 
-          {task.status !== 'completed' && (
-            <>
-              <div className="space-y-1 mt-3">
-                <label className="block text-sm font-medium text-gray-700">Add a Comment</label>
+        {task.status !== 'completed' && (
+          <div className="mt-auto pt-4 border-t border-gray-200">
+            <div className="space-y-1">
+              <div className="relative">
                 <textarea
                   value={comment}
                   onChange={handleCommentChange}
-                  className="w-full px-2 py-1 md:px-3 md:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  onKeyDown={handleKeyDown}
+                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                   rows="2"
                   placeholder="Write a comment..."
                 ></textarea>
-                <div className="flex justify-end mt-1">
-                  <button
-                    onClick={handleCommentSubmit}
-                    className="px-3 py-1 md:px-4 md:py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
-                  >
-                    Submit
-                  </button>
-                </div>
+                <button
+                  onClick={handleCommentSubmit}
+                  disabled={!comment.trim()}
+                  className={`absolute right-2 bottom-2 p-1 rounded-full ${comment.trim() ? 'text-blue-500 hover:text-blue-600 hover:bg-blue-50' : 'text-gray-400'}`}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
               </div>
-
-              <div className="pt-3 flex justify-end">
+              <div className="flex justify-end mt-2">
                 <button 
                   onClick={handleCloseTask}
                   className="px-3 py-1 md:px-4 md:py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm"
@@ -158,9 +167,9 @@ const TaskDetail = ({ task, onClose, onTaskClose, onCommentSubmit }) => {
                   Close Task
                 </button>
               </div>
-            </>
-          )}
-        </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

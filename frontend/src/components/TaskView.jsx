@@ -1,27 +1,32 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import TaskDetail from './TaskDetail';
 import TaskEditForm from './TaskEditForm';
-
-
-
-
+import ConfirmModal from './ConfirmModal';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const TaskView = ({ tasks, onTaskUpdate, onTaskDelete }) => {
   const [filter, setFilter] = useState('all');
   const [sortBy, setSortBy] = useState('dueDate');
   const [selectedTask, setSelectedTask] = useState(null);
   const [editingTask, setEditingTask] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState(null); // Added to track which task to delete
 
   const filteredTasks = tasks.filter(task => {
     if (filter === 'all') return true;
-    
     if (filter === 'completed') return task.status === 'completed';
     if (filter === 'pending') return task.status === 'pending';
     return true;
   });
 
   const sortedTasks = [...filteredTasks].sort((a, b) => {
-    if (sortBy === 'dueDate') return new Date(a.dueDate) - new Date(b.dueDate);
+    if (sortBy === 'dueDate') {
+      // Handle undefined due dates by putting them at the end
+      if (!a.dueDate) return 1;
+      if (!b.dueDate) return -1;
+      return new Date(a.dueDate) - new Date(b.dueDate);
+    }
     if (sortBy === 'priority') {
       const priorityOrder = { high: 3, medium: 2, low: 1 };
       return priorityOrder[b.priority] - priorityOrder[a.priority];
@@ -52,6 +57,20 @@ const TaskView = ({ tasks, onTaskUpdate, onTaskDelete }) => {
     onTaskUpdate(updatedTask._id, updatedTask);
   };
 
+  const handleDeleteClick = (task) => {
+    setTaskToDelete(task);
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (taskToDelete) {
+      onTaskDelete(taskToDelete._id);
+      toast.success("Task Deleted Successfully");
+    }
+    setShowDeleteModal(false);
+    setTaskToDelete(null);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -63,7 +82,6 @@ const TaskView = ({ tasks, onTaskUpdate, onTaskDelete }) => {
             className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="all">All Tasks</option>
-            
             <option value="completed">Completed</option>
             <option value="pending">Pending</option>
           </select>
@@ -87,7 +105,9 @@ const TaskView = ({ tasks, onTaskUpdate, onTaskDelete }) => {
           sortedTasks.map(task => (
             <div 
               key={task._id} 
-              className={`p-4 bg-white rounded-lg shadow-sm border-l-4 ${task.status==="completed" ? 'border-green-500' : 'border-blue-500'}`} 
+              className={`p-4 bg-white rounded-lg shadow-sm border-l-4 ${
+                task.status === "completed" ? 'border-green-500' : 'border-blue-500'
+              }`} 
             >
               <div className="flex items-start justify-between">
                 <div className="space-y-2">
@@ -107,7 +127,9 @@ const TaskView = ({ tasks, onTaskUpdate, onTaskDelete }) => {
                       </svg>
                     )}
                     <h3 
-                      className={`font-medium ${task.status === 'completed' ? ' text-gray-500' : 'text-gray-800'} cursor-pointer`} 
+                      className={`font-medium ${
+                        task.status === 'completed' ? 'text-gray-500' : 'text-gray-800'
+                      } cursor-pointer`} 
                       onClick={() => setSelectedTask(task)}
                     >
                       {task.title}
@@ -118,7 +140,9 @@ const TaskView = ({ tasks, onTaskUpdate, onTaskDelete }) => {
                   </div>
                   
                   {task.description && (
-                    <p className="text-sm text-gray-600 max-h-24 overflow-auto">{task.description}</p>
+                    <p className="text-sm text-gray-600 max-h-24 overflow-auto">
+                      {task.description}
+                    </p>
                   )}
                 </div>
                 
@@ -134,7 +158,7 @@ const TaskView = ({ tasks, onTaskUpdate, onTaskDelete }) => {
                   </button>
                   
                   <button 
-                    onClick={() => onTaskDelete(task._id)}
+                    onClick={() => handleDeleteClick(task)}
                     className="p-1 text-gray-400 hover:text-red-500"
                     title="Delete task"
                   >
@@ -190,6 +214,17 @@ const TaskView = ({ tasks, onTaskUpdate, onTaskDelete }) => {
           onCancel={() => setEditingTask(null)}
         />
       )}
+      
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setTaskToDelete(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        message={taskToDelete ? `Are you sure you want to delete "${taskToDelete.title}" permanently? This action cannot be undone.` : ''}
+      />
     </div>
   );
 };

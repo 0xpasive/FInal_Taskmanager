@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { apiRequest } from "../utils/api";
+import { toast } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function AuthForm({ type }) {
   const isLogin = type === "login";
@@ -42,6 +44,7 @@ export default function AuthForm({ type }) {
 
       if (isLogin) {
         localStorage.setItem("token", response.data.token);
+        toast.success("Login sucessfull");
         navigate("/dashboard");
       } else {
         navigate("/");

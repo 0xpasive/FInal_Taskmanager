@@ -33,8 +33,8 @@ export const teamAPI = {
   },
 
   // Add member to a team
-  addMember: async (teamId, userId) => {
-    const response = await api.post(`/add/${teamId}`, { userId });
+  addMember: async (teamId, email) => {
+    const response = await api.post(`/add/${teamId}`, { email });
     return response.data;
   },
 
