@@ -54,6 +54,10 @@ export const teamAPI = {
     const response = await api.post(`/delete/${teamId}`);
     return response.data;
   },
+  getUnverifiedTeams: async () => {
+  const response = await axios.get('/invitations');
+  return response.data;
+  } ,
 
   // Optional: Add method to set token directly
   setAuthToken: (token) => {

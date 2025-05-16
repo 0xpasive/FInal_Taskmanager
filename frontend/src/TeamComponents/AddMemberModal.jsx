@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { teamAPI } from '../utils/apiTeam';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const AddMemberModal = ({ isOpen, onClose, teamId, onSuccess }) => {
   const [email, setEmail] = useState('');
@@ -14,9 +16,18 @@ const AddMemberModal = ({ isOpen, onClose, teamId, onSuccess }) => {
       await teamAPI.addMember(teamId, email);
       onSuccess();
       onClose();
-      setEmail(''); // Reset email field after success
+      setEmail(''); 
+      toast.success("Invitation sent")
     } catch (error) {
       console.error('Error adding member:', error);
+      if (error.response?.status === 404) {
+        
+        toast.error("User not found."); 
+        
+      } else {
+        
+        toast.error("User already in team"); // Optional
+      };
       // Optionally show error to user
     } finally {
       setIsLoading(false);

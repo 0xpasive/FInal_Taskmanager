@@ -75,45 +75,59 @@ const TeamCard = ({ team, onUpdate }) => {
       </div>
 
       {/* Members List */}
-      <div className="space-y-2">
-        {team.members.length > 0 ? (
-          <ul>
-          {team.members.map(member => {
-            const isCreator = member.user._id === team.createdBy._id;
-        
-            return (
-              <li key={member._id} className="py-2 flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`text-gray-700 ${isCreator ? 'font-semibold text-blue-600' : ''}`}
-                  >
-                    {member.user.fullname}
-                  </span>
-        
-                  
-                </div>
-                {isCreator && (
+            <div className="space-y-4">
+        {/* Verified Members */}
+        <div>
+          <h5 className="text-sm text-green-600 font-medium mb-1">Verified Members</h5>
+          <ul className="space-y-2">
+            {team.members.filter(m => m.isVerified).map(member => {
+              const isCreator = member.user._id === team.createdBy._id;
+              return (
+                <li key={member._id} className="py-2 flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <span className={`text-gray-700 ${isCreator ? 'font-semibold text-blue-600' : ''}`}>
+                      {member.user.fullname}
+                    </span>
+                  </div>
+                  {isCreator ? (
                     <span className="bg-blue-100 text-blue-600 text-xs px-2 py-0.5 rounded-full">
                       Leader
                     </span>
+                  ) : (
+                    <button
+                      onClick={() => handleRemoveMember(member.user._id)}
+                      className="text-red-500 hover:text-red-700 text-sm"
+                    >
+                      Remove
+                    </button>
                   )}
-                {!isCreator && (
-                  <button
-                    onClick={() => handleRemoveMember(member.user._id)}
-                    className="text-red-500 hover:text-red-700 text-sm"
-                  >
-                    Remove
-                  </button>
-                )}
-              </li>
-            );
-          })}
-        </ul>
- 
-        ) : (
-          <p className="text-gray-400 italic">No members yet</p>
-        )}
-      </div>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+
+  {/* Non-Verified Members */}
+        {team.members.some(m => !m.isVerified) && (
+  <div>
+    <h5 className="text-sm text-yellow-600 font-medium mb-1">Pending Members</h5>
+    <ul className="space-y-2">
+      {team.members.filter(m => !m.isVerified).map(member => (
+        <li key={member._id} className="py-2 flex justify-between items-center">
+          <span className="text-gray-700">{member.user.fullname}</span>
+          <button
+            onClick={() => handleRemoveMember(member.user._id)}
+            className="text-red-500 hover:text-red-700 text-sm"
+          >
+            Remove
+          </button>
+        </li>
+      ))}
+    </ul>
+  </div>
+)}
+</div>
+
 
       <AddMemberModal
         isOpen={isAddMemberOpen}

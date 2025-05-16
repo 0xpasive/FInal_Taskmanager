@@ -173,6 +173,26 @@ deleteTeam = async (req, res) => {
         });
     }
 };
+getMyInvitations = async (req, res) => {
+    try{
+        const user = req.user;
+
+        const teams = await Team.find({ 
+            $or: [
+                { "members.user": user._id },
+                { isVerified: "true" }
+            ]
+
+        });
+        res.status(200).json([teams]);
+    }
+    catch (error){
+        res.status(500).json({ message: "Error fetching teams", error: error.message });
+    }
+
+
+    
+};
 
 module.exports = {
     createTeam,
@@ -180,5 +200,6 @@ module.exports = {
     addMember,
     removeMember,
     getAllUsers,
-    deleteTeam
+    deleteTeam,
+    getMyInvitations
 };
