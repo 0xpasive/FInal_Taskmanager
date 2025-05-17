@@ -64,7 +64,10 @@ const getUserTasks = async (req, res) => {
                     'assignedTo': { $in: teamIds }
                 }
             ]
-        }).populate('assignedTo');
+        }).populate('assignedTo createdBy').populate({
+            path: 'comments.createdBy',
+            select: 'fullname' // Populate comment creators
+        });
 
         
 
@@ -141,6 +144,7 @@ const commentOnTask = async (req, res) => {
     try {
         const { taskId } = req.params;
         const { comment } = req.body;
+        const user = req.user;
 
         if (!comment || !comment.trim()) {
             return res.status(400).json({ message: 'Comment is required' });
@@ -148,7 +152,7 @@ const commentOnTask = async (req, res) => {
 
         const updatedTask = await Task.findByIdAndUpdate(
             taskId,
-            { $push: { comments: { comment: comment.trim(), createdAt: new Date() } } },
+            { $push: { comments: { comment: comment.trim(), createdAt: new Date(), createdBy: user._id } } },
             { new: true }
         );
 
@@ -162,7 +166,40 @@ const commentOnTask = async (req, res) => {
         res.status(500).json({ error: 'Error commenting on task' });
     }
 };
+const deleteComment = async (req,res) => {
+    const taskId = req.params.taskId;
+    const commentId = req.params.commentId;
+    try {
+    const task = await Task.findById(req.params.taskId);
+    
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
 
+    // Find the comment index
+    const commentIndex = task.comments.findIndex(
+      comment => comment._id.toString() === req.params.commentId
+    );
+
+    if (commentIndex === -1) {
+      return res.status(404).json({ message: 'Comment not found' });
+    }
+
+    // Check if user is the comment creator or task owner
+    
+    
+
+    // Remove the comment
+    task.comments.splice(commentIndex, 1);
+    await task.save();
+
+    res.json({ message: 'Comment deleted successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+    
+};
 
     
 
@@ -175,6 +212,7 @@ module.exports = {
     updateTask,
     deleteTask,
     closeTask,
-    commentOnTask
+    commentOnTask,
+    deleteComment
 };
 
