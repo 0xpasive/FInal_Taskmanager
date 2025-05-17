@@ -44,9 +44,11 @@ export default function AuthForm({ type }) {
 
       if (isLogin) {
         localStorage.setItem("token", response.data.token);
+        localStorage.setItem("user", JSON.stringify(response.data.user));
         toast.success("Login sucessfull");
         navigate("/dashboard");
       } else {
+        toast.success("Registration successful! Please log in.");
         navigate("/");
       }
     } catch (err) {

@@ -54,10 +54,21 @@ export const teamAPI = {
     const response = await api.post(`/delete/${teamId}`);
     return response.data;
   },
-  getUnverifiedTeams: async () => {
-  const response = await axios.get('/invitations');
+  getInvitations: async () => {
+  const response = await api.get('/invitations');
   return response.data;
   } ,
+  
+  acceptInvitation: async (teamId) => {
+    const response = await api.post('/accept', {teamId});
+    return response.data;
+    
+  },
+  declineInvitation: async (teamId) => {
+    const response = await api.post('/reject', {teamId});
+    return response.data;
+    
+  },
 
   // Optional: Add method to set token directly
   setAuthToken: (token) => {

@@ -7,10 +7,14 @@ import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 
-const TeamCard = ({ team, onUpdate }) => {
+const TeamCard = ({ team, onUpdate, userId }) => {
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [error, setError] = useState("");
+
+  const isCreator = userId === team.createdBy._id;
+
+  
 
   const handleDeleteTeam = async () => {
     try {
@@ -42,7 +46,7 @@ const TeamCard = ({ team, onUpdate }) => {
     toast.success("member removed sucessfully")
   } catch (error) {
     console.error("Error removing member:", error);
-    alert("Failed to remove member");
+    toast.error("Only leader can remove member");
   }
   };
 
@@ -53,12 +57,14 @@ const TeamCard = ({ team, onUpdate }) => {
         <h3 className="text-xl font-semibold text-gray-800">{team.name}</h3>
         <div className="flex items-center gap-2">
           
-            <button 
-            onClick={() => setShowDeleteModal(true)}
-            className="p-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition"
-          >
-            <Trash2 size={20} />
-          </button>
+          {isCreator && (
+  <button 
+    onClick={() => setShowDeleteModal(true)}
+    className="p-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition"
+  >
+    <Trash2 size={20} />
+  </button>
+)}
          
         </div>
       </div>
@@ -66,19 +72,21 @@ const TeamCard = ({ team, onUpdate }) => {
       {/* Members Header and Add Button */}
       <div className="flex justify-between items-center mb-2">
         <h4 className="text-sm font-medium text-gray-500">Members:</h4>
-        <button 
-          onClick={() => setIsAddMemberOpen(true)}
-          className="p-1.5 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
-        >
-          <Plus size={16} />
-        </button>
+        {isCreator && (
+  <button 
+    onClick={() => setIsAddMemberOpen(true)}
+    className="p-1.5 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+  >
+    <Plus size={16} />
+  </button>
+)}
       </div>
 
       {/* Members List */}
             <div className="space-y-4">
         {/* Verified Members */}
         <div>
-          <h5 className="text-sm text-green-600 font-medium mb-1">Verified Members</h5>
+          <h5 className="text-sm text-green-600 font-medium mb-1">Verified Members:</h5>
           <ul className="space-y-2">
             {team.members.filter(m => m.isVerified).map(member => {
               const isCreator = member.user._id === team.createdBy._id;
@@ -94,6 +102,7 @@ const TeamCard = ({ team, onUpdate }) => {
                       Leader
                     </span>
                   ) : (
+                    
                     <button
                       onClick={() => handleRemoveMember(member.user._id)}
                       className="text-red-500 hover:text-red-700 text-sm"

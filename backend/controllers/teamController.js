@@ -38,14 +38,16 @@ createTeam = async (req, res) => {
 getUserTeams = async (req, res) => {
     try {
         const userId = req.user._id;
-        const teams = await Team.find({ 
+
+        const teams = await Team.find({
             $or: [
-                { "members.user": userId },
+                { members: { $elemMatch: { user: userId, isVerified: true } } },
                 { createdBy: userId }
             ]
-        }).populate("members.user", "id fullname email")
-          .populate("createdBy", "id fullname email");
-        
+        })
+        .populate("members.user", "id fullname email")
+        .populate("createdBy", "id fullname email");
+
         res.status(200).json(teams);
     } catch (error) {
         console.error(error);
@@ -174,25 +176,76 @@ deleteTeam = async (req, res) => {
     }
 };
 getMyInvitations = async (req, res) => {
-    try{
+    try {
         const user = req.user;
 
         const teams = await Team.find({ 
-            $or: [
-                { "members.user": user._id },
-                { isVerified: "true" }
-            ]
-
+            members: {
+                $elemMatch: {
+                    user: user._id,
+                    isVerified: false
+                }
+            }
         });
-        res.status(200).json([teams]);
-    }
-    catch (error){
+
+        res.status(200).json(teams);
+    } catch (error) {
         res.status(500).json({ message: "Error fetching teams", error: error.message });
     }
+};
 
+acceptInvitation = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const { teamId } = req.body;
 
+        // Find the team
+        const team = await Team.findById(teamId);
+        if (!team) {
+            return res.status(404).json({ message: "Team not found" });
+        }
+
+        // Find the member in the team's members array
+        const member = team.members.find(
+            (m) => m.user.toString() === userId.toString()
+        );
+
+        if (!member) {
+            return res.status(400).json({ message: "User is not a member of this team" });
+        }
+
+        // Update the member's isVerified status
+        member.isVerified = true;
+
+        // Save the updated team document
+        await team.save();
+
+        return res.status(200).json({ message: "Invitation accepted successfully" });
+    } catch (error) {
+        console.error("Error accepting invitation:", error);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+rejectInvitation = async (req,res) => {
+    const {teamId} = req.body;
+    const user = req.user;
+    try {
+        const team = await Team.findById(teamId);
+        team.members = team.members.filter(
+            member => !member.user.equals(user._id)
+        );
+        
+        await team.save();
+        return res.status(200).json({ message: "Invitation rejected successfully" });
+
+    } catch (error) {
+        console.error("Error rejecting invitation:", error);
+        return res.status(500).json({ message: "Internal server error" });
+    }
     
 };
+
 
 module.exports = {
     createTeam,
@@ -201,5 +254,7 @@ module.exports = {
     removeMember,
     getAllUsers,
     deleteTeam,
-    getMyInvitations
+    getMyInvitations,
+    acceptInvitation,
+    rejectInvitation
 };
