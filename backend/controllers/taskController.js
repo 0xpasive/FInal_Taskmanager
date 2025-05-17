@@ -1,6 +1,7 @@
 const Task = require("../models/Task");
 const User = require("../models/User");
 const express = require("express");
+const Team = require('../models/Team');
 
 const jwt = require("jsonwebtoken");
 
@@ -8,7 +9,10 @@ const CreateTask = async (req, res) => {
     try {
         
         const user = req.user;
-        const { title, description, dueDate, priority, assignedTo, isTeamTask } = req.body;
+        let { title, description, dueDate, priority, assignedTo, isTeamTask } = req.body;
+        if (!isTeamTask) {
+                assignedTo = null;
+        }
         
     
         // Create a new task instance
@@ -36,24 +40,42 @@ const CreateTask = async (req, res) => {
 //get task of the user based on provided bearer token
 const getUserTasks = async (req, res) => {
     try {
-            
-            const user = req.user;
-                
+        const user = req.user;
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        // Get teams where the user is a member
+        const userId = req.user._id;
+
+        const teams = await Team.find({
+            $or: [
+                { members: { $elemMatch: { user: userId, isVerified: true } } },
+                { createdBy: userId }
+            ]
+        })
         
-            if (!user) return res.status(404).json({ message: "User not found" });
+        const teamIds = teams.map(team => team._id);
 
-            const tasks = await Task.find({ createdBy: user._id });
-            if (!tasks) return res.status(404).json({ message: "No tasks Please Create a task" });
-            
-            res.json(tasks);
+        // Find tasks either created by the user OR assigned to user's teams
+        const tasks = await Task.find({
+            $or: [
+                { createdBy: user._id },
+                { 
+                    isTeamTask: true,
+                    'assignedTo': { $in: teamIds }
+                }
+            ]
+        }).populate('assignedTo');
 
-        }
-    catch (error) {
+        
+
+        res.json(tasks);
+
+    } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Error fetching tasks' });
     }
-    
 };
+
 
 const updateTask = async (req, res) => {
     try {

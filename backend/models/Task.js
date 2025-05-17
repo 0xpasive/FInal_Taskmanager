@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const User = require("./User");
+const Team = require("./Team");
 
 const taskSchema = new mongoose.Schema({
   title: {
@@ -21,10 +22,10 @@ const taskSchema = new mongoose.Schema({
     required: true,
   },
   assignedTo: {
-    type: String,
-    
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Team",
      // Assuming you have a TeamMember model for the assigned user
-    default: User._id,
+    default: null,
   },
   isTeamTask: {
     type: Boolean,

@@ -2,23 +2,37 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 
+
 import Notifications from '../components/Notification';
 import TaskView from '../components/TaskView';
 import TeamView from '../components/TeamView';
 import TaskForm from '../components/TaskForm';
 import ProfileButton from '../components/ProfileButton';
 import { apiRequest, apiRequestTasks } from '../utils/api';
+import { teamAPI } from '../utils/apiTeam';
 
 const Dashboard = () => {
   const [activeView, setActiveView] = useState('tasks');
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [tasks, setTasks] = useState([]);
+  const [teams, setTeams] = useState([]);
   
   
   const [notifications, setNotifications] = useState([]);
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
+  const fetchTeams = async () => {
+      
+      try {
+        const data = await teamAPI.getTeams();
+        setTeams(data);
+      } catch (error) {
+        console.error('Error fetching teams:', error);
+      } finally {
+        
+      }
+    };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -40,6 +54,7 @@ const Dashboard = () => {
     };
 
     fetchData();
+    fetchTeams();
   }, []);
 
   const handleCreateTask = async (taskData) => {
@@ -167,7 +182,7 @@ const Dashboard = () => {
             <TaskForm
               onSubmit={handleCreateTask}
               onCancel={() => setShowTaskForm(false)}
-              
+              teams={teams}
               
             />
           </div>

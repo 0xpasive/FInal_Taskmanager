@@ -17,6 +17,7 @@ const TaskView = ({ tasks, onTaskUpdate, onTaskDelete }) => {
     if (filter === 'all') return true;
     if (filter === 'completed') return task.status === 'completed';
     if (filter === 'pending') return task.status === 'pending';
+    if (filter === 'team') return task.isTeamTask;
     return true;
   });
 
@@ -84,6 +85,7 @@ const TaskView = ({ tasks, onTaskUpdate, onTaskDelete }) => {
             <option value="all">All Tasks</option>
             <option value="completed">Completed</option>
             <option value="pending">Pending</option>
+            <option value="team">Team Tasks</option>
           </select>
         </div>
         

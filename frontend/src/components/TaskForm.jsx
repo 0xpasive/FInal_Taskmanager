@@ -2,19 +2,21 @@ import React, { useState } from 'react';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-const TaskForm = ({ onSubmit, onCancel }) => {
+const TaskForm = ({ teams , onSubmit, onCancel }) => {
   const [taskData, setTaskData] = useState({
     title: '',
     description: '',
     dueDate: '',
     priority: 'medium',
+    assignedTo: '',
+    isTeamTask: false
   });
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value , type , checked } = e.target;
     setTaskData({
       ...taskData,
-      [name]: value
+      [name]: type === 'checkbox' ? checked : value
     });
   };
 
@@ -29,6 +31,7 @@ const TaskForm = ({ onSubmit, onCancel }) => {
     }
 
     onSubmit(taskData);
+    
     toast.success('Task created successfully!');
   };
 
@@ -86,6 +89,34 @@ const TaskForm = ({ onSubmit, onCancel }) => {
           <option value="high">High</option>
         </select>
       </div>
+      <div className="form-group checkbox-group">
+        <input
+          type="checkbox"
+          id="isTeamTask"
+          name="isTeamTask"
+          checked={taskData.isTeamTask}
+          onChange={handleChange}
+        />
+        <label htmlFor="isTeamTask">Team Task</label>
+      </div>
+      
+      {taskData.isTeamTask && (
+        <div className="form-group">
+          <label>Assign To</label>
+          <select
+            name="assignedTo"
+            value={taskData.assignedTo}
+            onChange={handleChange}
+          >
+            <option value="">Select Team </option>
+            {teams.map(team => (
+              <option key={team._id} value={team._id}>
+                {team.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
       
       <div className="flex justify-end space-x-3 pt-4">
         <button 
