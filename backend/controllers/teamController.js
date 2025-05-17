@@ -186,7 +186,7 @@ getMyInvitations = async (req, res) => {
                     isVerified: false
                 }
             }
-        });
+        }).populate('createdBy', 'fullname');
 
         res.status(200).json(teams);
     } catch (error) {

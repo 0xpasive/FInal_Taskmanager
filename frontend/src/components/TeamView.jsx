@@ -100,7 +100,7 @@ const MyTeam = () => {
       {invitations.map(invitation => (
   <div key={invitation._id} className="mb-4 last:mb-0 p-4 border border-gray-200 rounded-lg shadow-sm bg-white">
     <p className="text-gray-700 mb-3">
-      You've been invited to join <span className="font-semibold text-gray-900">{invitation.name}</span>
+      You've been invited to join <span className="font-semibold text-gray-900">{invitation.name}</span> by <span className="font-semibold text-gray-900">{invitation.createdBy.fullname}</span>
     </p>
     <div className="flex gap-2">
       <button
