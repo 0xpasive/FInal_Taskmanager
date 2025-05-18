@@ -204,7 +204,7 @@ const TaskView = ({ tasks, onTaskUpdate, onTaskDelete }) => {
           task={selectedTask} 
           onClose={() => setSelectedTask(null)}
           onTaskClose={handleTaskClose}
-          onCommentSubmit={handleCommentSubmit}
+          
         />
       )}
       

@@ -2,109 +2,136 @@ import React from 'react';
 import { apiRequestTasks } from '../utils/api';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { FiX, FiCalendar, FiFlag, FiCheckCircle, FiUser, FiClock } from 'react-icons/fi';
 
 const TaskDetail = ({ task, onClose, onTaskClose }) => {
   const user = JSON.parse(localStorage.getItem("user"));
-  const getPriorityColor = (priority) => {
-    switch (priority) {
-      case 'high': return 'bg-red-100 text-red-800';
-      case 'medium': return 'bg-yellow-100 text-yellow-800';
-      case 'low': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
+
+  const priorityConfig = {
+    high: { color: 'bg-red-500/10 text-red-600', icon: '🔥' },
+    medium: { color: 'bg-amber-500/10 text-amber-600', icon: '⚠️' },
+    low: { color: 'bg-emerald-500/10 text-emerald-600', icon: '🌿' }
   };
 
-  const getStatusText = (completed) => {
-    return completed ? 'Completed' : 'Pending';
+  const statusConfig = {
+    completed: { color: 'bg-green-500/10 text-green-600', text: 'Completed' },
+    pending: { color: 'bg-blue-500/10 text-blue-600', text: 'Pending' }
   };
 
-  const getStatusColor = (completed) => {
-    return completed ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800';
-  };
-
-  const handleCloseTask = async() => {
+  const handleCloseTask = async () => {
     try {
-      const response = await apiRequestTasks(`/close/${task._id}`, 'POST', { close });
+      const response = await apiRequestTasks(`/close/${task._id}`, 'POST', {});
       onTaskClose(task._id, response.data);
-      toast.success("Task closed Successfully!");
+      toast.success("Task marked as completed!");
     } catch (error) {
+      toast.error("Failed to complete task");
       console.error('Error closing task:', error);
     }
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm bg-white/30 z-50 p-4">
-      <div className="bg-white rounded-lg p-4 md:p-6 w-full max-w-md mx-2 max-h-[90vh] flex flex-col">
-        <div className="flex justify-between items-start mb-4">
-          <h2 className="text-lg md:text-xl font-bold text-gray-800">Task Details</h2>
+    <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm bg-black/30 z-50 p-4 animate-fadeIn">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-2 max-h-[90vh] flex flex-col overflow-hidden border border-gray-100">
+        {/* Header */}
+        <div className="flex justify-between items-center p-5 border-b border-gray-100">
+          <h2 className="text-xl font-bold text-gray-800">Task Details</h2>
           <button 
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-500"
+            className="p-1 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors"
+            aria-label="Close"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 md:h-6 md:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <FiX className="h-5 w-5" />
           </button>
         </div>
 
-        <div className="overflow-y-auto pr-2 flex-1 space-y-3 md:space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-base md:text-lg font-medium text-gray-800">{task.title}</h3>
-            <span className={`px-2 py-1 text-xs rounded-full ${getPriorityColor(task.priority)}`}>
-              {task.priority}
+        {/* Content */}
+        <div className="overflow-y-auto flex-1 p-5 space-y-5">
+          {/* Title and Priority */}
+          <div className="flex justify-between items-start gap-4">
+            <h3 className="text-lg font-semibold text-gray-800 leading-tight">{task.title}</h3>
+            <span className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1 ${priorityConfig[task.priority]?.color || 'bg-gray-100 text-gray-600'}`}>
+              {priorityConfig[task.priority]?.icon} {task.priority}
             </span>
           </div>
 
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-gray-700">Description</label>
-            <div className="p-2 md:p-3 bg-gray-50 rounded-md text-gray-700 min-h-20 text-sm md:text-base">
-              {task.description || 'No description provided'}
+          {/* Description */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-sm font-medium text-gray-500">
+              <span>Description</span>
+            </div>
+            <div className="p-4 bg-gray-50 rounded-lg text-gray-700 text-sm leading-relaxed">
+              {task.description || (
+                <span className="text-gray-400 italic">No description provided</span>
+              )}
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 md:gap-4">
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">Status</label>
-              <div className={`px-2 py-1 md:px-3 md:py-2 rounded-md text-sm ${getStatusColor(task.status === 'completed')}`}>
-                {getStatusText(task.status === 'completed')}
+          {/* Metadata Grid */}
+          <div className="grid grid-cols-2 gap-4">
+            {/* Status */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm font-medium text-gray-500">
+                <FiCheckCircle className="h-4 w-4" />
+                <span>Status</span>
+              </div>
+              <div className={`px-3 py-2 rounded-lg text-sm font-medium ${statusConfig[task.status === 'completed' ? 'completed' : 'pending'].color}`}>
+                {statusConfig[task.status === 'completed' ? 'completed' : 'pending'].text}
               </div>
             </div>
 
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">Type</label>
-              <div className="px-2 py-1 md:px-3 md:py-2 bg-gray-50 rounded-md text-sm">
-                {task.isTeamTask ? 'Team Task' : 'Personal Task'}
+            {/* Task Type */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm font-medium text-gray-500">
+                <FiUser className="h-4 w-4" />
+                <span>Type</span>
               </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 md:gap-4">
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">Due Date</label>
-              <div className="px-2 py-1 md:px-3 md:py-2 bg-gray-50 rounded-md text-sm">
-                {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'No due date'}
+              <div className="px-3 py-2 bg-gray-50 rounded-lg text-sm font-medium">
+                {task.isTeamTask ? 'Team Task' : 'Personal'}
               </div>
             </div>
 
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">Created At</label>
-              <div className="px-2 py-1 md:px-3 md:py-2 bg-gray-50 rounded-md text-sm">
-                {new Date(task.createdAt).toLocaleDateString()}
+            {/* Due Date */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm font-medium text-gray-500">
+                <FiCalendar className="h-4 w-4" />
+                <span>Due Date</span>
+              </div>
+              <div className="px-3 py-2 bg-gray-50 rounded-lg text-sm font-medium">
+                {task.dueDate ? new Date(task.dueDate).toLocaleDateString('en-US', { 
+                  month: 'short', 
+                  day: 'numeric',
+                  year: 'numeric'
+                }) : 'No due date'}
+              </div>
+            </div>
+
+            {/* Created At */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm font-medium text-gray-500">
+                <FiClock className="h-4 w-4" />
+                <span>Created</span>
+              </div>
+              <div className="px-3 py-2 bg-gray-50 rounded-lg text-sm font-medium">
+                {new Date(task.createdAt).toLocaleDateString('en-US', { 
+                  month: 'short', 
+                  day: 'numeric',
+                  year: 'numeric'
+                })}
               </div>
             </div>
           </div>
         </div>
 
+        {/* Footer */}
         {task.status !== 'completed' && (
-          <div className="mt-auto pt-4 border-t border-gray-200">
-            <div className="flex justify-end">
-              <button 
-                onClick={handleCloseTask}
-                className="px-3 py-1 md:px-4 md:py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm"
-              >
-                Close Task
-              </button>
-            </div>
+          <div className="p-5 border-t border-gray-100 bg-gray-50">
+            <button 
+              onClick={handleCloseTask}
+              className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+            >
+              <FiCheckCircle className="h-4 w-4" />
+              Mark as Complete
+            </button>
           </div>
         )}
       </div>

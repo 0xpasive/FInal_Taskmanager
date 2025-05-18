@@ -34,6 +34,7 @@ const TaskForm = ({ teams , onSubmit, onCancel }) => {
     
     toast.success('Task created successfully!');
   };
+   const user = JSON.parse(localStorage.getItem("user"));
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -100,23 +101,27 @@ const TaskForm = ({ teams , onSubmit, onCancel }) => {
         <label htmlFor="isTeamTask">Team Task</label>
       </div>
       
-      {taskData.isTeamTask && (
-        <div className="form-group">
-          <label>Assign To</label>
-          <select
-            name="assignedTo"
-            value={taskData.assignedTo}
-            onChange={handleChange}
-          >
-            <option value="">Select Team </option>
-            {teams.map(team => (
-              <option key={team._id} value={team._id}>
-                {team.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
+          {taskData.isTeamTask && (
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">Assign To Team</label>
+              <select
+                name="assignedTo"
+                value={taskData.assignedTo}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select Team</option>
+                {teams
+                  .filter(team => team.createdBy === user.id) // Only show teams created by current user
+                  .map(team => (
+                    <option key={team._id} value={team._id}>
+                      {team.name}
+                    </option>
+                  ))
+                }
+              </select>
+            </div>
+          )}
       
       <div className="flex justify-end space-x-3 pt-4">
         <button 
