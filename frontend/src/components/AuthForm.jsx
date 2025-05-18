@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { apiRequest } from "../utils/api";
 import { toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 export default function AuthForm({ type }) {
   const isLogin = type === "login";
@@ -16,6 +17,11 @@ export default function AuthForm({ type }) {
     password: "",
   });
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const validatePassword = (password) => {
+    const regex =/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
+    return regex.test(password);
+  };
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -33,7 +39,11 @@ export default function AuthForm({ type }) {
     if (isLogin && (!form.email || !form.password)) {
       setError("Email and Password are required.");
       return;
-    }
+    };
+    if (!isLogin && !validatePassword(form.password)) {
+      setError("Password must be at least 8 characters, include uppercase, lowercase, number, and special character.");
+      return;
+    };
 
     try {
       const payload = isLogin
@@ -51,8 +61,8 @@ export default function AuthForm({ type }) {
         toast.success("Registration successful! Please log in.");
         navigate("/");
       }
-    } catch (err) {
-      setError(err.message || "Something went wrong");
+    } catch (error) {
+      setError(error.response?.data?.message || "Something went wrong");
     }
   };
 
@@ -110,14 +120,24 @@ export default function AuthForm({ type }) {
         placeholder="Email"
         className="w-full p-2 border mb-4 rounded"
       />
-      <input
-        type="password"
-        name="password"
-        value={form.password}
-        onChange={handleChange}
-        placeholder="Password"
-        className="w-full p-2 border mb-4 rounded"
-      />
+      <div className="relative w-full mb-1">
+        <input
+          type={showPassword ? "text" : "password"}
+          name="password"
+          value={form.password}
+          onChange={handleChange}
+          placeholder="Password"
+          className="w-full p-2 border rounded pr-10"
+        />
+        <button
+          type="button"
+          onClick={() => setShowPassword(!showPassword)}
+          className="absolute right-2 top-2 text-gray-600 hover:text-gray-900"
+          tabIndex={-1}
+        >
+          {showPassword ? <FaEyeSlash /> : <FaEye />} 
+        </button>
+      </div>
       {error && <p className="text-red-500 text-sm mb-2">{error}</p>}
 
       <button className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700 transition">

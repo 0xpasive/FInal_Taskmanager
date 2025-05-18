@@ -41,23 +41,7 @@ const taskSchema = new mongoose.Schema({
     enum: ['pending', 'completed'],
     default: 'pending',
   },
-  comments: [
-    {
-      
-      comment: {
-        type: String,
-        required: true,
-      },
-      createdAt: {
-        type: Date,
-        default: Date.now,
-      },
-      createdBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
-      },
-    },
-  ]
+  
     
 }, { timestamps: true });
 

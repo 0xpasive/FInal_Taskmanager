@@ -54,9 +54,9 @@ const TaskView = ({ tasks, onTaskUpdate, onTaskDelete }) => {
     setSelectedTask(null);
   };
 
-  const handleCommentSubmit = async (updatedTask) => {
-    onTaskUpdate(updatedTask._id, updatedTask);
-  };
+  // const handleCommentSubmit = async (updatedTask) => {
+  //   onTaskUpdate(updatedTask._id, updatedTask);
+  // };
 
   const handleDeleteClick = (task) => {
     setTaskToDelete(task);
@@ -66,7 +66,7 @@ const TaskView = ({ tasks, onTaskUpdate, onTaskDelete }) => {
   const handleConfirmDelete = () => {
     if (taskToDelete) {
       onTaskDelete(taskToDelete._id);
-      toast.success("Task Deleted Successfully");
+      
     }
     setShowDeleteModal(false);
     setTaskToDelete(null);

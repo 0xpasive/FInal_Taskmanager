@@ -40,42 +40,43 @@ const CreateTask = async (req, res) => {
 //get task of the user based on provided bearer token
 const getUserTasks = async (req, res) => {
     try {
-        const user = req.user;
-        if (!user) return res.status(404).json({ message: "User not found" });
-
-        // Get teams where the user is a member
         const userId = req.user._id;
 
+        // Get teams where the user is a member (including teams they created)
         const teams = await Team.find({
             $or: [
-                { members: { $elemMatch: { user: userId, isVerified: true } } },
-                { createdBy: userId }
+                { 'members.user': userId }, // User is a member
+                { createdBy: userId }      // User created the team
             ]
-        })
+        }).select('_id'); // Only get team IDs
         
         const teamIds = teams.map(team => team._id);
 
-        // Find tasks either created by the user OR assigned to user's teams
+        // Find tasks:
+        // - Personal tasks created by the user
+        // OR
+        // - Team tasks assigned to user's teams
         const tasks = await Task.find({
             $or: [
-                { createdBy: user._id },
+                { createdBy: userId, isTeamTask: false }, // Personal tasks
                 { 
                     isTeamTask: true,
-                    'assignedTo': { $in: teamIds }
+                    assignedTo: { $in: teamIds }           // Team tasks
                 }
             ]
-        }).populate('assignedTo createdBy').populate({
-            path: 'comments.createdBy',
-            select: 'fullname' // Populate comment creators
-        });
-
-        
+        })
+        .populate('assignedTo') // Fixed typo (removed space)
+        .populate('createdBy', 'username email') // Add more useful population
+        .sort({ dueDate: 1, priority: -1 }); // Sort by due date (asc) and priority (high first)
 
         res.json(tasks);
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Error fetching tasks' });
+        console.error('Error fetching user tasks:', error);
+        res.status(500).json({ 
+            error: 'Internal server error',
+            message: 'Could not fetch tasks' 
+        });
     }
 };
 
@@ -105,17 +106,36 @@ const updateTask = async (req, res) => {
 const deleteTask = async (req, res) => {
     try {
         const { taskId } = req.params;
+        const userId = req.user._id; // More concise
 
-        const deletedTask = await Task.findByIdAndDelete(taskId);
-
-        if (!deletedTask) {
+        // First verify the task exists
+        const task = await Task.findById(taskId);
+        if (!task) {
             return res.status(404).json({ message: 'Task not found' });
         }
 
-        res.json({ message: 'Task deleted successfully' });
+        // Then check authorization
+        if (!task.createdBy.equals(userId)) {
+            return res.status(403).json({ 
+                message: 'Not authorized to delete this task' 
+            });
+        }
+
+        // Perform deletion
+        await Task.findByIdAndDelete(taskId);
+
+        // Return success response
+        return res.status(200).json({ 
+            message: 'Task deleted successfully',
+            deletedTaskId: taskId 
+        });
+
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Error deleting task' });
+        console.error('Error deleting task:', error);
+        return res.status(500).json({ 
+            error: 'Internal server error',
+            message: 'Failed to delete task' 
+        });
     }
 };
 const closeTask = async (req, res) => {
@@ -140,66 +160,66 @@ const closeTask = async (req, res) => {
     }
 };
 
-const commentOnTask = async (req, res) => {
-    try {
-        const { taskId } = req.params;
-        const { comment } = req.body;
-        const user = req.user;
+// const commentOnTask = async (req, res) => {
+//     try {
+//         const { taskId } = req.params;
+//         const { comment } = req.body;
+//         const user = req.user;
 
-        if (!comment || !comment.trim()) {
-            return res.status(400).json({ message: 'Comment is required' });
-        }
+//         if (!comment || !comment.trim()) {
+//             return res.status(400).json({ message: 'Comment is required' });
+//         }
 
-        const updatedTask = await Task.findByIdAndUpdate(
-            taskId,
-            { $push: { comments: { comment: comment.trim(), createdAt: new Date(), createdBy: user._id } } },
-            { new: true }
-        );
+//         const updatedTask = await Task.findByIdAndUpdate(
+//             taskId,
+//             { $push: { comments: { comment: comment.trim(), createdAt: new Date(), createdBy: user._id } } },
+//             { new: true }
+//         );
 
-        if (!updatedTask) {
-            return res.status(404).json({ message: 'Task not found' });
-        }
+//         if (!updatedTask) {
+//             return res.status(404).json({ message: 'Task not found' });
+//         }
 
-        res.json(updatedTask);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Error commenting on task' });
-    }
-};
-const deleteComment = async (req,res) => {
-    const taskId = req.params.taskId;
-    const commentId = req.params.commentId;
-    try {
-    const task = await Task.findById(req.params.taskId);
+//         res.json(updatedTask);
+//     } catch (error) {
+//         console.error(error);
+//         res.status(500).json({ error: 'Error commenting on task' });
+//     }
+// };
+// const deleteComment = async (req,res) => {
+//     const taskId = req.params.taskId;
+//     const commentId = req.params.commentId;
+//     try {
+//     const task = await Task.findById(req.params.taskId);
     
-    if (!task) {
-      return res.status(404).json({ message: 'Task not found' });
-    }
+//     if (!task) {
+//       return res.status(404).json({ message: 'Task not found' });
+//     }
 
-    // Find the comment index
-    const commentIndex = task.comments.findIndex(
-      comment => comment._id.toString() === req.params.commentId
-    );
+//     // Find the comment index
+//     const commentIndex = task.comments.findIndex(
+//       comment => comment._id.toString() === req.params.commentId
+//     );
 
-    if (commentIndex === -1) {
-      return res.status(404).json({ message: 'Comment not found' });
-    }
+//     if (commentIndex === -1) {
+//       return res.status(404).json({ message: 'Comment not found' });
+//     }
 
-    // Check if user is the comment creator or task owner
+//     // Check if user is the comment creator or task owner
     
     
 
-    // Remove the comment
-    task.comments.splice(commentIndex, 1);
-    await task.save();
+//     // Remove the comment
+//     task.comments.splice(commentIndex, 1);
+//     await task.save();
 
-    res.json({ message: 'Comment deleted successfully' });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Server error' });
-  }
+//     res.json({ message: 'Comment deleted successfully' });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ error: 'Server error' });
+//   }
     
-};
+// };
 
     
 
@@ -212,7 +232,7 @@ module.exports = {
     updateTask,
     deleteTask,
     closeTask,
-    commentOnTask,
-    deleteComment
+    // commentOnTask,
+    // deleteComment
 };
 

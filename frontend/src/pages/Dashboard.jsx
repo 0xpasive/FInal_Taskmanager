@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 
 
@@ -82,11 +84,15 @@ const Dashboard = () => {
   };
 
   const handleTaskDelete = async (taskId) => {
+  const prevTasks = [...tasks]; // Backup
+  setTasks(tasks.filter(task => task._id !== taskId)); // Optimistic update
+  
     try {
-      await apiRequestTasks(`/delete/${taskId}`, 'DELETE' , { taskId });
-      setTasks(tasks.filter(task => task._id !== taskId));
+      await apiRequestTasks(`/delete/${taskId}`, 'DELETE', {taskId});
+      toast.success("Task deleted successfully");
     } catch (error) {
-      console.error('Error deleting task:', error);
+      setTasks(prevTasks); // Revert on error
+      toast.error(error.response?.data?.message || "Failed to delete task");
     }
   };
 

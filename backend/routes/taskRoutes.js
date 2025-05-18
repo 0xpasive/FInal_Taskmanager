@@ -11,8 +11,8 @@ router.get("/myTasks",authMiddleware,  getUserTasks); // Get all tasks for a use
 router.post("/update/:taskId", authMiddleware, updateTask); // Update a task
 router.delete("/delete/:taskId", authMiddleware, deleteTask);
 router.post("/close/:taskId", authMiddleware, closeTask); // Close a task
-router.post("/comment/:taskId", authMiddleware, commentOnTask); // Comment on a task
-router.post("/comment/:taskId/:commentId", authMiddleware, deleteComment);
+// router.post("/comment/:taskId", authMiddleware, commentOnTask); // Comment on a task
+// router.post("/comment/:taskId/:commentId", authMiddleware, deleteComment);
    
 
 module.exports = router;

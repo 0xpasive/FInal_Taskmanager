@@ -63,19 +63,25 @@ const userDetail = async (req, res) => {
     
 };
 
+
+
 const changePassword = async (req, res) => {
     try {
         const user = req.user;
+        
+        const {currentPassword, newPassword} = req.body;
 
         if (!user) return res.status(404).json({ message: "User not found" });
+      
     
         const isMatch = await bcrypt.compare(currentPassword, user.password);
         if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
-    
+        console.log(isMatch);
+        
         user.password = newPassword;
         await user.save();
     
-        res.json({ message: "Password changed successfully" });
+        res.status(200).json({ message: "Password changed successfully" });
         
 
 
@@ -84,6 +90,7 @@ const changePassword = async (req, res) => {
         res.status(500).json({ message: "Server error" });
     }
 };
+
 
 
 
