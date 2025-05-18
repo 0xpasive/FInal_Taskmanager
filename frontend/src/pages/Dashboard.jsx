@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-import Notifications from '../components/Notification';
+
 import TaskView from '../components/TaskView';
 import TeamView from '../components/TeamView';
 import TaskForm from '../components/TaskForm';
@@ -14,7 +14,7 @@ import { teamAPI } from '../utils/apiTeam';
 const Dashboard = () => {
   const [activeView, setActiveView] = useState('tasks');
   const [showTaskForm, setShowTaskForm] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
+  
   const [tasks, setTasks] = useState([]);
   const [teams, setTeams] = useState([]);
   const [notifications, setNotifications] = useState([]);
@@ -138,29 +138,7 @@ const Dashboard = () => {
             Create Task
           </button>
           
-          <div className="relative">
-            <button 
-              className="p-2 text-gray-600 hover:text-blue-500 relative"
-              onClick={() => setShowNotifications(!showNotifications)}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-              </svg>
-              {notifications.filter(n => !n.read).length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  {notifications.filter(n => !n.read).length}
-                </span>
-              )}
-            </button>
-            
-            {showNotifications && (
-              <Notifications
-                notifications={notifications}
-                onNotificationClick={handleNotificationClick}
-                onClose={() => setShowNotifications(false)}
-              />
-            )}
-          </div>
+          
           
           <ProfileButton user={user} onClick={() => navigate('/profile')} />
         </div>
@@ -198,23 +176,8 @@ const Dashboard = () => {
               Create Task
             </button>
             
-            <div className="flex items-center justify-between px-4 py-2">
-              <button 
-                className="p-2 text-gray-600 hover:text-blue-500 relative"
-                onClick={() => {
-                  setShowNotifications(!showNotifications);
-                  setShowMobileMenu(false);
-                }}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                </svg>
-                {notifications.filter(n => !n.read).length > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    {notifications.filter(n => !n.read).length}
-                  </span>
-                )}
-              </button>
+            <div className="flex  justify-between px-4 py-2">
+              
               
               <ProfileButton user={user} onClick={() => {
                 navigate('/profile');
