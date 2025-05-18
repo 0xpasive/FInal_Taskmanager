@@ -127,7 +127,7 @@ const TaskDetail = ({ task, onClose, onTaskClose }) => {
           <div className="p-5 border-t border-gray-100 bg-gray-50">
             <button 
               onClick={handleCloseTask}
-              className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+              className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
             >
               <FiCheckCircle className="h-4 w-4" />
               Mark as Complete
