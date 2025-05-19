@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import axios  from 'axios';
 
 
 import TaskView from '../components/TaskView';
@@ -50,15 +51,34 @@ const Dashboard = () => {
     fetchTeams();
   }, []);
 
-  const handleCreateTask = async (taskData) => {
-    try {
-      const response = await apiRequestTasks('/create', 'POST', taskData);
-      setTasks([...tasks, response.data]);
-      setShowTaskForm(false);
-    } catch (error) {
-      console.error('Error creating task:', error);
-    }
-  };
+  const handleCreateTask = async (formData) => {
+  try {
+    const token = localStorage.getItem('token');
+    
+    const response = await axios.post(
+      'http://localhost:5000/api/tasks/create', // Replace with your actual API endpoint
+      formData,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          // Don't set Content-Type manually - browser will set it automatically with boundary
+        }
+      }
+    );
+
+    setTasks([...tasks, response.data]);
+    setShowTaskForm(false);
+    toast.success('Task created successfully!');
+  } catch (error) {
+    console.error('Error creating task:', error);
+    
+    // Display error message from server if available
+    const errorMessage = error.response?.data?.message || 
+                         error.response?.data?.error || 
+                         'Failed to create task';
+    toast.error(errorMessage);
+  }
+};
 
   const handleTaskUpdate = async (taskId, updates) => {
     try {

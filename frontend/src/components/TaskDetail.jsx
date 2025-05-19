@@ -2,7 +2,7 @@ import React from 'react';
 import { apiRequestTasks } from '../utils/api';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { FiX, FiCalendar, FiFlag, FiCheckCircle, FiUser, FiClock } from 'react-icons/fi';
+import { FiX, FiCalendar, FiFlag, FiCheckCircle, FiUser, FiClock, FiPaperclip, FiDownload } from 'react-icons/fi';
 
 const TaskDetail = ({ task, onClose, onTaskClose }) => {
   const user = JSON.parse(localStorage.getItem("user"));
@@ -27,6 +27,10 @@ const TaskDetail = ({ task, onClose, onTaskClose }) => {
       toast.error("Failed to complete task");
       console.error('Error closing task:', error);
     }
+  };
+
+  const handleDownloadAttachment = (attachmentUrl) => {
+    window.open(attachmentUrl, '_blank');
   };
 
   return (
@@ -65,6 +69,33 @@ const TaskDetail = ({ task, onClose, onTaskClose }) => {
               )}
             </div>
           </div>
+
+          {/* Attachments */}
+          {task.files && task.files.length > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm font-medium text-gray-500">
+                <FiPaperclip className="h-4 w-4" />
+                <span>Attachments ({task.files.length})</span>
+              </div>
+              <div className="space-y-2">
+                {task.files.map((file, index) => (
+                  <div 
+                    key={index} 
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                    onClick={() => handleDownloadAttachment(`http://localhost:5000/${file.path}`)}
+                  >
+                    <div className="flex items-center gap-3">
+                      <FiPaperclip className="h-4 w-4 text-gray-500" />
+                      <span className="text-sm font-medium text-gray-700 truncate max-w-[180px]">
+                        {file.filename || `Attachment ${index + 1}`}
+                      </span>
+                    </div>
+                    <FiDownload className="h-4 w-4 text-gray-500" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Metadata Grid */}
           <div className="grid grid-cols-2 gap-4">
