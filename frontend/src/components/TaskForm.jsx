@@ -110,7 +110,7 @@ const TaskForm = ({ teams , onSubmit, onCancel }) => {
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                
+                <option value="">Select Team</option>
                 {teams
                   .filter(team => team.createdBy._id === user.id) // Only show teams created by current user
                   .map(team => (

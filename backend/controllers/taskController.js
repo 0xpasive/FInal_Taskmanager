@@ -7,14 +7,25 @@ const jwt = require("jsonwebtoken");
 
 const CreateTask = async (req, res) => {
     try {
-        
         const user = req.user;
         let { title, description, dueDate, priority, assignedTo, isTeamTask } = req.body;
+        
         if (!isTeamTask) {
-                assignedTo = null;
+            assignedTo = null;
+        }
+
+        // Handle file uploads for all tasks
+        let files = [];
+        if (req.files) {
+            files = req.files.map(file => ({
+                filename: file.filename,
+                originalname: file.originalname,
+                path: file.path,
+                mimetype: file.mimetype,
+                size: file.size
+            }));
         }
         
-    
         // Create a new task instance
         const newTask = new Task({
             title,
@@ -23,13 +34,14 @@ const CreateTask = async (req, res) => {
             priority,
             assignedTo,
             isTeamTask,
-            createdBy: user._id,  // Use the user ID from the request
+            createdBy: user._id,
+            files
         });
     
         // Save the task to the database
         const savedTask = await newTask.save();
     
-        res.status(201).json(savedTask);  // Return the saved task as a response
+        res.status(201).json(savedTask);
     } 
     catch (error) {
         console.error(error);
