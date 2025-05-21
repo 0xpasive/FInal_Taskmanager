@@ -32,6 +32,7 @@ const TaskDetail = ({ task, onClose, onTaskClose }) => {
   const handleDownloadAttachment = (attachmentUrl) => {
     window.open(attachmentUrl, '_blank');
   };
+  
 
   return (
     <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm bg-black/30 z-50 p-4 animate-fadeIn">
@@ -156,13 +157,16 @@ const TaskDetail = ({ task, onClose, onTaskClose }) => {
         {/* Footer */}
         {task.status !== 'completed' && (
           <div className="p-5 border-t border-gray-100 bg-gray-50">
-            <button 
+            {task.createdBy._id === user.id && (
+              <button 
               onClick={handleCloseTask}
               className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
             >
               <FiCheckCircle className="h-4 w-4" />
               Mark as Complete
             </button>
+              )}
+            
           </div>
         )}
       </div>
