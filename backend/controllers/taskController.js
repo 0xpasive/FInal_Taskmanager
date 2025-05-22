@@ -2,6 +2,7 @@ const Task = require("../models/Task");
 const User = require("../models/User");
 const express = require("express");
 const Team = require('../models/Team');
+const Comments = require('../models/Comments')
 
 const jwt = require("jsonwebtoken");
 
@@ -233,6 +234,42 @@ const closeTask = async (req, res) => {
     
 // };
 
+const addComments = async (req, res) => {
+  try {
+    const user = req.user;
+    const { content } = req.body;
+    const {taskId} = req.params;
+
+    const comment = new Comments({
+      content: content,
+      task: taskId,
+      user: user._id
+    });
+
+    await comment.save();
+
+    const populatedComment = await Comments.findById(comment._id).populate('user', 'fullname');
+
+    res.status(201).json(populatedComment);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const getComments = async (req, res) => {
+  try {
+    const user = req.user;
+    const { taskId } = req.params;
+
+    const comments = await Comments.find({ task: taskId }).populate('user', 'fullname');
+
+    res.status(200).json(comments);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
     
 
 
@@ -244,6 +281,8 @@ module.exports = {
     updateTask,
     deleteTask,
     closeTask,
+    addComments,
+    getComments
     // commentOnTask,
     // deleteComment
 };

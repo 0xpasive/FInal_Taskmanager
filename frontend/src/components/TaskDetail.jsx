@@ -1,11 +1,14 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { apiRequestTasks } from '../utils/api';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { FiX, FiCalendar, FiFlag, FiCheckCircle, FiUser, FiClock, FiPaperclip, FiDownload } from 'react-icons/fi';
+import { FiX, FiCalendar, FiFlag, FiCheckCircle, FiUser, FiClock, FiPaperclip, FiDownload, FiMessageSquare, FiSend } from 'react-icons/fi';
 
 const TaskDetail = ({ task, onClose, onTaskClose }) => {
   const user = JSON.parse(localStorage.getItem("user"));
+  const [comments, setComments] = useState([]);
+  const [newComment, setNewComment] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const priorityConfig = {
     high: { color: 'bg-red-500/10 text-red-600', icon: '🔥' },
@@ -16,6 +19,52 @@ const TaskDetail = ({ task, onClose, onTaskClose }) => {
   const statusConfig = {
     completed: { color: 'bg-green-500/10 text-green-600', text: 'Completed' },
     pending: { color: 'bg-blue-500/10 text-blue-600', text: 'Pending' }
+  };
+
+  // Fetch comments when task changes
+  useEffect(() => {
+    if (task.isTeamTask) {
+      fetchComments();
+    }
+  }, [task]);
+
+  const fetchComments = async () => {
+    try {
+      const response = await apiRequestTasks(`/${task._id}/comments`, 'GET',{});
+      setComments(response.data);
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+    }
+  };
+
+  const handleAddComment = async () => {
+    if (!newComment.trim() || isSubmitting) return;
+    
+    setIsSubmitting(true);
+    try {
+      const response = await apiRequestTasks(`/${task._id}/comments`, 'POST', {
+        content: newComment,
+         // Send user ID with the comment
+      });
+
+      if (response.data) {
+        // Add the new comment to the local state
+        setComments([...comments, {
+          ...response.data,
+          user: { // Include user details in the response
+            _id: user.id,
+            fullname: user.fullname
+          }
+        }]);
+        setNewComment('');
+        toast.success("Comment added!");
+      }
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      toast.error("Failed to add comment");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleCloseTask = async () => {
@@ -32,7 +81,6 @@ const TaskDetail = ({ task, onClose, onTaskClose }) => {
   const handleDownloadAttachment = (attachmentUrl) => {
     window.open(attachmentUrl, '_blank');
   };
-  
 
   return (
     <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm bg-black/30 z-50 p-4 animate-fadeIn">
@@ -152,6 +200,75 @@ const TaskDetail = ({ task, onClose, onTaskClose }) => {
               </div>
             </div>
           </div>
+
+          {/* Comments Section - Only for team tasks */}
+          {task.isTeamTask && (
+            <div className="space-y-4 pt-4 border-t border-gray-100">
+              <div className="flex items-center gap-2 text-sm font-medium text-gray-500">
+                <FiMessageSquare className="h-4 w-4" />
+                <span>Comments ({comments.length})</span>
+              </div>
+
+              {/* Comments List */}
+              <div className="space-y-3">
+                {comments.length > 0 ? (
+                  comments.map((comment) => (
+                    <div key={comment._id} className="flex gap-3">
+                      <div className="flex-shrink-0">
+                        <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-medium text-sm">
+                          {comment?.user?.fullname?.split(' ').map(n => n[0]).join('')}
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <div className="bg-gray-50 rounded-lg p-3">
+                          <div className="flex items-center gap-2">
+                            {/* <span className="text-sm font-medium text-gray-800">{comment.user.fullname}</span> */}
+                            <span className="text-xs text-gray-400">
+                              {new Date(comment.createdAt).toLocaleString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-700 mt-1">{comment.content}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-400 italic">No comments yet</p>
+                )}
+              </div>
+
+              {/* Add Comment */}
+              <div className="flex gap-2 pt-2">
+                <div className="flex-shrink-0">
+                  <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-medium text-sm">
+                    {user?.fullname?.split(' ').map(n => n[0]).join('')}
+                  </div>
+                </div>
+                <div className="flex-1 flex gap-2">
+                  <input
+                    type="text"
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    placeholder="Write a comment..."
+                    className="flex-1 text-sm border border-gray-200 rounded-full px-4 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    onKeyPress={(e) => e.key === 'Enter' && handleAddComment()}
+                  />
+                  <button
+                    onClick={handleAddComment}
+                    disabled={!newComment.trim()}
+                    className="p-2 rounded-full bg-blue-500 text-white disabled:bg-gray-200 disabled:text-gray-400"
+                  >
+                    <FiSend className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
@@ -159,14 +276,13 @@ const TaskDetail = ({ task, onClose, onTaskClose }) => {
           <div className="p-5 border-t border-gray-100 bg-gray-50">
             {task.createdBy._id === user.id && (
               <button 
-              onClick={handleCloseTask}
-              className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
-            >
-              <FiCheckCircle className="h-4 w-4" />
-              Mark as Complete
-            </button>
-              )}
-            
+                onClick={handleCloseTask}
+                className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+              >
+                <FiCheckCircle className="h-4 w-4" />
+                Mark as Complete
+              </button>
+            )}
           </div>
         )}
       </div>
