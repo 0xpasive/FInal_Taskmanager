@@ -27,21 +27,28 @@ const TaskForm = ({ teams, onSubmit, onCancel }) => {
     addFiles(newFiles);
   };
 
-  const addFiles = useCallback((newFiles) => {
-    // Filter out duplicates and invalid files
-    const uniqueNewFiles = newFiles.filter(newFile => 
-      !files.some(existingFile => 
-        existingFile.name === newFile.name && existingFile.size === newFile.size
-      )
-    );
+      const addFiles = useCallback((newFiles) => {
+        // Filter out duplicates and invalid files
+        const uniqueNewFiles = newFiles.filter(newFile => 
+          !files.some(existingFile => 
+            existingFile.name === newFile.name && existingFile.size === newFile.size
+          )
+        );
 
-    if (uniqueNewFiles.length === 0) {
-      toast.warn('Some files were duplicates and not added');
-      return;
-    }
+        if (uniqueNewFiles.length === 0) {
+          toast.warn('Some files were duplicates and not added');
+          return;
+        }
 
-    setFiles(prevFiles => [...prevFiles, ...uniqueNewFiles]);
-  }, [files]);
+        // Check if adding these files would exceed the limit
+        const totalFilesAfterAdd = files.length + uniqueNewFiles.length;
+        if (totalFilesAfterAdd > 2) {
+          toast.error('You can only upload a maximum of 2 files');
+          return;
+        }
+
+        setFiles(prevFiles => [...prevFiles, ...uniqueNewFiles]);
+      }, [files]);
 
   const handleDragOver = (e) => {
     e.preventDefault();
@@ -186,7 +193,7 @@ const TaskForm = ({ teams, onSubmit, onCancel }) => {
             >
               Select Files
             </label>
-            <p className="text-xs text-gray-500">Supports multiple files (Max 10MB each)</p>
+            <p className="text-xs text-gray-500">Supports up to 2 files (Max 10MB each)</p>
           </div>
         </div>
         
