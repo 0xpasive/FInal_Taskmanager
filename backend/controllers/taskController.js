@@ -3,7 +3,8 @@ const User = require("../models/User");
 const express = require("express");
 const Team = require('../models/Team');
 const Comments = require('../models/Comments')
-
+const fs = require("fs");
+const path = require("path");
 const jwt = require("jsonwebtoken");
 
 const CreateTask = async (req, res) => {
@@ -119,27 +120,35 @@ const updateTask = async (req, res) => {
 const deleteTask = async (req, res) => {
     try {
         const { taskId } = req.params;
-        const userId = req.user._id; // More concise
+        const userId = req.user._id;
 
-        // First verify the task exists
         const task = await Task.findById(taskId);
         if (!task) {
             return res.status(404).json({ message: 'Task not found' });
         }
 
-        // Then check authorization
         if (!task.createdBy.equals(userId)) {
             return res.status(403).json({ 
                 message: 'Not authorized to delete this task' 
             });
         }
 
-        // Perform deletion
+        // Delete associated files using file.path
+        if (task.files && task.files.length > 0) {
+            task.files.forEach(file => {
+                if (file.path && fs.existsSync(file.path)) {
+                    fs.unlink(file.path, err => {
+                        if (err) console.error(`Failed to delete file at ${file.path}`, err);
+                    });
+                }
+            });
+        }
+
+        // Delete the task from DB
         await Task.findByIdAndDelete(taskId);
 
-        // Return success response
         return res.status(200).json({ 
-            message: 'Task deleted successfully',
+            message: 'Task and files deleted successfully',
             deletedTaskId: taskId 
         });
 
@@ -173,66 +182,7 @@ const closeTask = async (req, res) => {
     }
 };
 
-// const commentOnTask = async (req, res) => {
-//     try {
-//         const { taskId } = req.params;
-//         const { comment } = req.body;
-//         const user = req.user;
 
-//         if (!comment || !comment.trim()) {
-//             return res.status(400).json({ message: 'Comment is required' });
-//         }
-
-//         const updatedTask = await Task.findByIdAndUpdate(
-//             taskId,
-//             { $push: { comments: { comment: comment.trim(), createdAt: new Date(), createdBy: user._id } } },
-//             { new: true }
-//         );
-
-//         if (!updatedTask) {
-//             return res.status(404).json({ message: 'Task not found' });
-//         }
-
-//         res.json(updatedTask);
-//     } catch (error) {
-//         console.error(error);
-//         res.status(500).json({ error: 'Error commenting on task' });
-//     }
-// };
-// const deleteComment = async (req,res) => {
-//     const taskId = req.params.taskId;
-//     const commentId = req.params.commentId;
-//     try {
-//     const task = await Task.findById(req.params.taskId);
-    
-//     if (!task) {
-//       return res.status(404).json({ message: 'Task not found' });
-//     }
-
-//     // Find the comment index
-//     const commentIndex = task.comments.findIndex(
-//       comment => comment._id.toString() === req.params.commentId
-//     );
-
-//     if (commentIndex === -1) {
-//       return res.status(404).json({ message: 'Comment not found' });
-//     }
-
-//     // Check if user is the comment creator or task owner
-    
-    
-
-//     // Remove the comment
-//     task.comments.splice(commentIndex, 1);
-//     await task.save();
-
-//     res.json({ message: 'Comment deleted successfully' });
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ error: 'Server error' });
-//   }
-    
-// };
 
 const addComments = async (req, res) => {
   try {
