@@ -16,5 +16,6 @@ router.post("/close/:taskId", authMiddleware, closeTask); // Close a task
 // router.post("/comment/:taskId/:commentId", authMiddleware, deleteComment);
 router.post("/:taskId/comments", authMiddleware, addComments);
 router.get("/:taskId/comments", authMiddleware, getComments);
+router.delete("/:taskId/comments/:commentId", authMiddleware, deleteComment); // Delete a comment
 
 module.exports = router;

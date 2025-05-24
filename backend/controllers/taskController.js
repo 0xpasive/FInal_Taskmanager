@@ -269,6 +269,31 @@ const getComments = async (req, res) => {
   }
 };
 
+const deleteComment = async (req, res) => {
+  try {
+    const { taskId, commentId } = req.params;
+    const user = req.user;
+
+    // Find the comment
+    const comment = await Comments.findById(commentId);
+
+    if (!comment) {
+      return res.status(404).json({ message: 'Comment not found' });
+    }
+
+    // Check if the user is the creator of the comment
+    //the task creator can also delete the comment
+    
+
+    // Delete the comment
+    await Comments.findByIdAndDelete(commentId);
+
+    res.status(200).json({ message: 'Comment deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 
     
 
@@ -282,8 +307,8 @@ module.exports = {
     deleteTask,
     closeTask,
     addComments,
-    getComments
+    getComments,
     // commentOnTask,
-    // deleteComment
+    deleteComment
 };
 

@@ -2,13 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { apiRequestTasks } from '../utils/api';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { FiX, FiCalendar, FiFlag, FiCheckCircle, FiUser, FiClock, FiPaperclip, FiDownload, FiMessageSquare, FiSend } from 'react-icons/fi';
+import { FiX, FiCalendar, FiFlag, FiCheckCircle, FiUser, FiClock, FiPaperclip, FiDownload, FiMessageSquare, FiSend, FiTrash2 } from 'react-icons/fi';
+import ConfirmModal from './ConfirmModal';
 
 const TaskDetail = ({ task, onClose, onTaskClose }) => {
   const user = JSON.parse(localStorage.getItem("user"));
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [commentToDelete, setCommentToDelete] = useState(null);
+  const [error, setError] = useState('');
 
   const priorityConfig = {
     high: { color: 'bg-red-500/10 text-red-600', icon: '🔥' },
@@ -44,14 +48,12 @@ const TaskDetail = ({ task, onClose, onTaskClose }) => {
     try {
       const response = await apiRequestTasks(`/${task._id}/comments`, 'POST', {
         content: newComment,
-         // Send user ID with the comment
       });
 
       if (response.data) {
-        // Add the new comment to the local state
         setComments([...comments, {
           ...response.data,
-          user: { // Include user details in the response
+          user: {
             _id: user.id,
             fullname: user.fullname
           }
@@ -67,6 +69,26 @@ const TaskDetail = ({ task, onClose, onTaskClose }) => {
     }
   };
 
+  const handleDeleteComment = async () => {
+    try {
+      await apiRequestTasks(`/${task._id}/comments/${commentToDelete}`, 'DELETE', {});
+      setComments(comments.filter(comment => comment._id !== commentToDelete));
+      toast.success("Comment deleted!");
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+      setError("Failed to delete comment");
+      toast.error("Failed to delete comment");
+    } finally {
+      setShowDeleteModal(false);
+      setCommentToDelete(null);
+    }
+  };
+
+  const canDeleteComment = (comment) => {
+    // Allow deletion if user is the comment author OR the task creator
+    return comment.user._id === user.id || task.createdBy._id === user.id;
+  };
+
   const handleCloseTask = async () => {
     try {
       const response = await apiRequestTasks(`/close/${task._id}`, 'POST', {});
@@ -80,6 +102,11 @@ const TaskDetail = ({ task, onClose, onTaskClose }) => {
 
   const handleDownloadAttachment = (attachmentUrl) => {
     window.open(attachmentUrl, '_blank');
+  };
+
+  const openDeleteModal = (commentId) => {
+    setCommentToDelete(commentId);
+    setShowDeleteModal(true);
   };
 
   return (
@@ -213,16 +240,16 @@ const TaskDetail = ({ task, onClose, onTaskClose }) => {
               <div className="space-y-3">
                 {comments.length > 0 ? (
                   comments.map((comment) => (
-                    <div key={comment._id} className="flex gap-3">
+                    <div key={comment._id} className="flex gap-3 group">
                       <div className="flex-shrink-0">
                         <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-medium text-sm">
                           {comment?.user?.fullname?.split(' ').map(n => n[0]).join('')}
                         </div>
                       </div>
-                      <div className="flex-1">
-                        <div className="bg-gray-50 rounded-lg p-3">
+                      <div className="flex-1 relative">
+                        <div className="bg-gray-50 rounded-lg p-3 group-hover:bg-gray-100 transition-colors">
                           <div className="flex items-center gap-2">
-                            {/* <span className="text-sm font-medium text-gray-800">{comment.user.fullname}</span> */}
+                            <span className="text-sm font-medium text-gray-800">{comment.user.fullname}</span>
                             <span className="text-xs text-gray-400">
                               {new Date(comment.createdAt).toLocaleString('en-US', {
                                 month: 'short',
@@ -234,6 +261,15 @@ const TaskDetail = ({ task, onClose, onTaskClose }) => {
                           </div>
                           <p className="text-sm text-gray-700 mt-1">{comment.content}</p>
                         </div>
+                        {canDeleteComment(comment) && (
+                          <button
+                            onClick={() => openDeleteModal(comment._id)}
+                            className="absolute top-3 right-3 p-1 rounded-full hover:bg-gray-200 text-gray-500 hover:text-red-500 transition-colors"
+                            aria-label="Delete comment"
+                          >
+                            <FiTrash2 className="h-3 w-3" />
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))
@@ -286,6 +322,18 @@ const TaskDetail = ({ task, onClose, onTaskClose }) => {
           </div>
         )}
       </div>
+      
+      <ConfirmModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setCommentToDelete(null);
+          setError("");
+        }}
+        onConfirm={handleDeleteComment}
+        message="Are you sure you want to delete this comment? This action cannot be undone."
+        error={error}
+      />
     </div>
   );
 };
