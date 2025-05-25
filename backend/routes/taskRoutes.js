@@ -14,7 +14,7 @@ router.delete("/delete/:taskId", authMiddleware, deleteTask);
 router.post("/close/:taskId", authMiddleware, closeTask); // Close a task
 // router.post("/comment/:taskId", authMiddleware, commentOnTask); // Comment on a task
 // router.post("/comment/:taskId/:commentId", authMiddleware, deleteComment);
-router.post("/:taskId/comments", authMiddleware, addComments);
+router.post("/:taskId/comments", authMiddleware, upload.array('files'), addComments);
 router.get("/:taskId/comments", authMiddleware, getComments);
 router.delete("/:taskId/comments/:commentId", authMiddleware, deleteComment); // Delete a comment
 

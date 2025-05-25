@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { apiRequestTasks } from '../utils/api';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { FiX, FiCalendar, FiFlag, FiCheckCircle, FiUser, FiClock, FiPaperclip, FiDownload, FiMessageSquare, FiSend, FiTrash2 } from 'react-icons/fi';
 import ConfirmModal from './ConfirmModal';
+import axios from 'axios';
 
 const TaskDetail = ({ task, onClose, onTaskClose }) => {
   const user = JSON.parse(localStorage.getItem("user"));
@@ -13,6 +14,8 @@ const TaskDetail = ({ task, onClose, onTaskClose }) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [commentToDelete, setCommentToDelete] = useState(null);
   const [error, setError] = useState('');
+  const [selectedFile, setSelectedFile] = useState(null);
+  const fileInputRef = useRef(null);
 
   const priorityConfig = {
     high: { color: 'bg-red-500/10 text-red-600', icon: '🔥' },
@@ -42,13 +45,27 @@ const TaskDetail = ({ task, onClose, onTaskClose }) => {
   };
 
   const handleAddComment = async () => {
-    if (!newComment.trim() || isSubmitting) return;
+    if ((!newComment.trim() && !selectedFile) || isSubmitting) return;
     
     setIsSubmitting(true);
     try {
-      const response = await apiRequestTasks(`/${task._id}/comments`, 'POST', {
-        content: newComment,
-      });
+      const token = localStorage.getItem("token");
+      const formData = new FormData();
+      formData.append('content', newComment);
+      if (selectedFile) {
+        formData.append('files', selectedFile);
+      }
+
+      const response = await axios.post(
+        `http://localhost:5000/api/tasks/${task._id}/comments`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
 
       if (response.data) {
         setComments([...comments, {
@@ -59,13 +76,31 @@ const TaskDetail = ({ task, onClose, onTaskClose }) => {
           }
         }]);
         setNewComment('');
+        setSelectedFile(null);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
         toast.success("Comment added!");
       }
     } catch (error) {
       console.error('Error adding comment:', error);
-      toast.error("Failed to add comment");
+      toast.error(error.response?.data?.message || "Failed to add comment");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSelectedFile(file);
+    }
+  };
+
+  const removeFile = () => {
+    setSelectedFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
@@ -260,6 +295,20 @@ const TaskDetail = ({ task, onClose, onTaskClose }) => {
                             </span>
                           </div>
                           <p className="text-sm text-gray-700 mt-1">{comment.content}</p>
+                          {comment.files &&  comment.files.length > 0 && (
+                            <div 
+                              className="mt-2 flex items-center justify-between p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
+                              onClick={() => handleDownloadAttachment(`http://localhost:5000/${comment.files[0].path}`)}
+                            >
+                              <div className="flex items-center gap-2">
+                                <FiPaperclip className="h-4 w-4 text-gray-500" />
+                                <span className="text-sm font-medium text-gray-700 truncate max-w-[180px]">
+                                  {comment.files[0].originalname || 'Attachment'}
+                                </span>
+                              </div>
+                              <FiDownload className="h-4 w-4 text-gray-500" />
+                            </div>
+                          )}
                         </div>
                         {canDeleteComment(comment) && (
                           <button
@@ -285,22 +334,50 @@ const TaskDetail = ({ task, onClose, onTaskClose }) => {
                     {user?.fullname?.split(' ').map(n => n[0]).join('')}
                   </div>
                 </div>
-                <div className="flex-1 flex gap-2">
-                  <input
-                    type="text"
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    placeholder="Write a comment..."
-                    className="flex-1 text-sm border border-gray-200 rounded-full px-4 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    onKeyPress={(e) => e.key === 'Enter' && handleAddComment()}
-                  />
-                  <button
-                    onClick={handleAddComment}
-                    disabled={!newComment.trim()}
-                    className="p-2 rounded-full bg-blue-500 text-white disabled:bg-gray-200 disabled:text-gray-400"
-                  >
-                    <FiSend className="h-4 w-4" />
-                  </button>
+                <div className="flex-1 space-y-2">
+                  <div className="relative flex gap-2">
+                    <input
+                      type="text"
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      placeholder="Write a comment..."
+                      className="flex-1 text-sm border border-gray-200 rounded-full px-4 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      onKeyPress={(e) => e.key === 'Enter' && handleAddComment()}
+                    />
+                    <label className="p-2 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-700 cursor-pointer">
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileChange}
+                        className="hidden"
+                        accept="*"
+                      />
+                      <FiPaperclip className="h-4 w-4" />
+                    </label>
+                    <button
+                      onClick={handleAddComment}
+                      disabled={(!newComment.trim() && !selectedFile) || isSubmitting}
+                      className="p-2 rounded-full bg-blue-500 text-white disabled:bg-gray-200 disabled:text-gray-400"
+                    >
+                      <FiSend className="h-4 w-4" />
+                    </button>
+                  </div>
+                  {selectedFile && (
+                    <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <FiPaperclip className="h-4 w-4 text-gray-500" />
+                        <span className="text-sm text-gray-700 truncate max-w-[200px]">
+                          {selectedFile.name}
+                        </span>
+                      </div>
+                      <button 
+                        onClick={removeFile}
+                        className="p-1 rounded-full hover:bg-gray-200 text-gray-500 hover:text-red-500"
+                      >
+                        <FiX className="h-3 w-3" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

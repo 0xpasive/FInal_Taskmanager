@@ -17,7 +17,18 @@ const commentSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
-  }
+  },
+  files: [{
+    filename: String,
+    originalname: String,
+    path: String,
+    mimetype: String,
+    size: Number,
+    uploadedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }]
 }, { timestamps: true });
 
 const Comments = mongoose.model('Comments', commentSchema);

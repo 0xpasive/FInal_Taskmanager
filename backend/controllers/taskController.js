@@ -188,12 +188,27 @@ const addComments = async (req, res) => {
   try {
     const user = req.user;
     const { content } = req.body;
+    if (!content || content.trim() === '') {
+      return res.status(400).json({ message: 'Comment is required' });
+    }
+
     const {taskId} = req.params;
+    let files = [];
+        if (req.files) {
+            files = req.files.map(file => ({
+                filename: file.filename,
+                originalname: file.originalname,
+                path: file.path,
+                mimetype: file.mimetype,
+                size: file.size
+            }));
+        }
 
     const comment = new Comments({
       content: content,
       task: taskId,
-      user: user._id
+      user: user._id,
+      files: files
     });
 
     await comment.save();
@@ -231,8 +246,16 @@ const deleteComment = async (req, res) => {
       return res.status(404).json({ message: 'Comment not found' });
     }
 
-    // Check if the user is the creator of the comment
-    //the task creator can also delete the comment
+    //Delete files associated with the comment
+    if (comment.files && comment.files.length > 0) {
+      comment.files.forEach(file => {
+        if (file.path && fs.existsSync(file.path)) {
+          fs.unlink(file.path, err => {
+            if (err) console.error(`Failed to delete file at ${file.path}`, err);
+          });
+        }
+      });
+    }
     
 
     // Delete the comment
